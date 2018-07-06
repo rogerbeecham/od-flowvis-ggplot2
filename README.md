@@ -1,12 +1,14 @@
 'Upgrading' spatial analysis of Origin-Destination data using modern visualization frameworks
 ---------------------------------------------------------------------------------------------
 
-Below are reproducible code examples supporting [this blog post](https://medium.com/@roger.beecham.231/upgrading-spatial-analysis-of-origin-destination-data-using-modern-vis-frameworks-part-1-of-2-ee1c6481a595) for generating flow maps with asymmetric bezier curves and spatially-ordered OD matrices in *ggplot2*.
+-   [Roger Beecham](http://www.roger-beecham.com) | (\[@rjbeecham\](<https://twitter.com/rJBeecham>))
+
+Below are reproducible code examples supporting [this blog post](https://medium.com/@roger.beecham.231/upgrading-spatial-analysis-of-origin-destination-data-using-modern-vis-frameworks-part-1-of-2-ee1c6481a595) for generating flow maps with asymmetric Bezier curves and spatially-ordered OD matrices in *ggplot2*.
 
 Configure R
 -----------
 
-In addition to [tidyverse](https://cran.r-project.org/web/packages/tidyverse/index.html) and [simple features](https://cran.r-project.org/web/packages/sf/index.html), these examples depend on the ggplot2 extension `ggforce` and the deveopment version of ggplot2, downlaoded via `devtools::install_github("tidyverse/ggplot2")`.
+In addition to [tidyverse](https://cran.r-project.org/web/packages/tidyverse/index.html) and [simple features](https://cran.r-project.org/web/packages/sf/index.html), these examples depend on the ggplot2 extension [*ggforce*](https://cran.r-project.org/web/packages/ggforce/index.html) and the development version of *ggplot2*, downloaded via `devtools::install_github("tidyverse/ggplot2")`.
 
 ``` r
 # Bundle of packages supporting Tidy data analysis.
@@ -15,9 +17,9 @@ library(tidyverse)
 library(sf)
 # For simplifying geometries.
 library(rmapshaper)
-# ggplot2 extension for beziers.
+# ggplot2 extension for Beziers.
 library(ggforce)
-# Dev version of ggplot2 required for combininh ggplot2 with sf data. 
+# Dev version of ggplot2 required for combining ggplot2 with sf data. 
 #devtools::install_github("tidyverse/ggplot2")
 library(ggplot2)
 # Set default  ggplot2 theme.
@@ -27,7 +29,7 @@ theme_set(theme_minimal(base_family="Avenir Book"))
 Collect Data
 ------------
 
-2011 Census OD travel-to-work data are freely available via [nomisweb](https://www.nomisweb.co.uk) to Local Authority District (LAD) level. However, these are historical authorities where City of London and Westminster are merged. Clearly this is not ideal for studying commuting patterns in London. The Medium post is based originally on data collected at a finer resolution which are then aggregated to LAD-level. These data are published via [UK Data Service](https://census.ukdataservice.ac.uk) and available only to registered users. This repository is based on the freely available data from [nomisweb](https://www.nomisweb.co.uk) with the merged data repeated for Westminster and London.
+2011 Census OD travel-to-work data are freely available via [nomisweb](https://www.nomisweb.co.uk) to Local Authority District (LAD) level. However, these are historical authorities where City of London and Westminster are merged. Clearly this is not ideal for studying commuting patterns in London. The Medium post is based originally on data collected at a finer resolution which are then aggregated to LAD-level. These data are published via [UK Data Service](https://census.ukdataservice.ac.uk) and available only to registered users. This repository is based on the freely available data from [nomisweb](https://www.nomisweb.co.uk) with the merged data represented at City of London.
 
 ``` r
 # Read in data.
@@ -56,7 +58,7 @@ rm(min_y,max_y)
 region_lookup <- st_read("https://opendata.arcgis.com/datasets/c457af6314f24b20bb5de8fe41e05898_0.geojson")
 # Remove geometry data.
 st_geometry(region_lookup) <- NULL
-# Join with  based on name. 
+# Join on name. 
 region_lookup <- region_lookup %>% filter(RGN17NM=="London") %>% 
   left_join(codes,by=c("LAD17NM"="description_lookup")) %>%
   rename("ladcd"="LAD17CD", "ladnm"="LAD17NM") %>% 
@@ -69,16 +71,16 @@ data <- data %>%
   mutate(d_name=gsub("\\{place of work}", "", d_name),
          mode=gsub("\\:.*$","",mode),
          mode=recode_factor(mode, "All categories"="all", "Bicycle"="bike", "On foot"="foot")) %>%
-  # Join on work_name and description
+  # Join on work_name and description.
   left_join(region_lookup %>% select(description, ladcd), by=c("d_name"="description")) %>%
   rename("d_code"="ladcd") %>%
-  # Join on home_code and geogcode
+  # Join on home_code and geogcode.
   left_join(region_lookup %>% select(geogcode, description, ladcd), by=c("home_code"="geogcode")) %>%
   rename("o_code"="ladcd", "o_name"="description") %>%
   select(mode, o_name, o_code, d_name, d_code, count) %>% 
   mutate(od_pair=paste(o_name, d_name, sep="-"))
 
-# Read in shapefile containing GB LA boundaries --  made available from ONS Open Geography Portal. 
+# Read in shapefile containing GB LA boundaries -- made available from ONS Open Geography Portal. 
 # We simplify the geometries using the "rmapshaper" library.
 download.file("http://geoportal.statistics.gov.uk/datasets/8edafbe3276d4b56aec60991cbddda50_3.zip", "boundaries_gb.zip")
 unzip("boundaries_gb.zip")
@@ -91,26 +93,24 @@ london_boundaries <- gb_boundaries %>%
 rm(gb_boundaries)
 # Simplify polygon.
 london_boundaries <- ms_simplify(london_boundaries, keep=0.2)
-# Clean workspace
+# Clean workspace.
 rm(codes, region_lookup)
 ```
 
 Draw asymmetric Beziers between OD pairs
 ----------------------------------------
 
-![Source: 2011 Census flow data](./figures/od_bezier.png)
-
 In order to generate the Bezier curves, we need to calculate centroids for each London borough. We then build a data frame of coordinates representing origins, destinations and control points of our Beziers. These are specified following the method published in [Wood et al. 2011](http://openaccess.city.ac.uk/538/). For brevity, I have encapsulated these functions into a script.
 
 ``` r
-# Calculate centroids for beziers.
+# Calculate centroids for Beziers.
 london_centroids <- london_boundaries %>%
   st_centroid() %>%
   st_coordinates() %>%
   as_tibble() %>%
   rename("east"="X", "north"="Y") %>%
   add_column(ladcd=london_boundaries %>% pull(lad15cd))
-# Add centroids to OD data
+# Add centroids to OD data.
 data <- data %>% 
   left_join(london_centroids, by=c("o_code"="ladcd")) %>% rename("o_east"="east", "o_north"="north") %>% 
   left_join(london_centroids, by=c("d_code"="ladcd")) %>% rename("d_east"="east", "d_north"="north")
@@ -118,16 +118,16 @@ data <- data %>%
 # Functions for determining coords and control points.
 source("./src/bezier_path.R")
 
-# Build data frame of trajectories (OD pair with controls)
+# Build data frame of trajectories (OD pair with controls).
 od_trajectories <- bind_rows(data %>% filter(o_code!=d_code) %>% pull(od_pair) %>% unique %>%
                                purrr::map_df(~get_trajectory(data %>% filter(od_pair==.x))) 
                                )
 ```
 
-The ggplot2 specification is reasonably straight-forward, but note that it depends on `geom_sf()`, available only in the development version of ggplot2. We create a variable representing OD-pair frequency `f_od`, which is used to determine the visual saliency of flow lines (again this appears in [Wood et al. 2011](http://openaccess.city.ac.uk/538/)). We can semi-automate this parameterisation of exponent (`^`) using `dplyr` mutate before the ggplot2 specification call; the smaller the exponent, the less strong the frequency weighting effect.
+The *ggplot2* specification is reasonably straight-forward, but note that it depends on `geom_sf()`, available only in the development version of *ggplot2*. We create a variable representing OD-pair frequency `f_od`, which is used to determine the visual saliency of flow lines (again this appears in [Wood et al. 2011](http://openaccess.city.ac.uk/538/)). We can semi-automate this parameterisation of exponent that we use to vary this weighting using `dplyr` mutate before the ggplot2 specification call; the smaller the exponent, the less strong the frequency weighting effect (currently set to `^0.4`).
 
 ``` r
-# ggplot2 specification for OD flow map from trajectories
+# ggplot2 specification for OD flow map from trajectories.
 od_trajectories <- od_trajectories %>% mutate(f_od=((count/max(count))^0.4))
 ggplot()+
   geom_sf(data=london_boundaries,  fill="#f7f7f7", colour="#cccccc", size=0.1)+
@@ -140,15 +140,15 @@ ggplot()+
   theme(axis.title=element_blank())
 ```
 
+![Source: 2011 Census flow data](./figures/od_bezier.png)
+
 Spatially ordered OD matrix
 ---------------------------
 
-![Source: 2011 Census flow data](./figures/od_matrix.png)
-
-We first update our OD data with the london\_squared borough positions.
+We first update our OD data with the [aftertheflood](https://aftertheflood.com/projects/future-cities-catapult/) borough positions.
 
 ``` r
-# Add london squared data to centroids df.
+# Add aftertheflood layout to centroids df.
 london_centroids <- london_centroids %>% add_column(ladnm=london_boundaries %>% pull(lad15nm)) %>% 
   left_join(london_squared, by=c("ladnm"="authority"))
 
@@ -185,12 +185,12 @@ data %>%
   )
 ```
 
+![Source: 2011 Census flow data](./figures/od_matrix.png)
+
 Spatially-ordered choropleths
 =============================
 
-![Source: 2011 Census flow data](./figures/od_choropleths.png)
-
-We need to attach geometries to our dataset of od pairs.
+We need to attach geometries to our dataset of OD pairs.
 
 ``` r
 # Calculate centre of London for placement of borough labels.
@@ -214,6 +214,7 @@ plot_data <- london_boundaries %>%
 `geom_sf()` creates the choropleths; `facet_grid()` splits the choropleths and arranges them at their approximate spatial position.
 
 ``` r
+# Spatially-ordered OD choropleths.
 ggplot()+
   geom_sf(data=plot_data, aes(fill=count), colour="#636363", size=0.01)+
   geom_sf(data=plot_data  %>% filter(bor_focus==1), fill="transparent",  colour="#636363", size=0.4)+
@@ -226,3 +227,5 @@ ggplot()+
     axis.title=element_blank(),
     strip.text=element_blank())
 ```
+
+![Source: 2011 Census flow data](./figures/od_choropleths.png)
