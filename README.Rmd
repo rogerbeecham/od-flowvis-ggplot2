@@ -8,12 +8,14 @@ output:
 
 ## 'Upgrading' spatial analysis of Origin-Destination data using modern visualization frameworks
 
-Below are reproducible code examples supporting [this blog post](https://medium.com/@roger.beecham.231/upgrading-spatial-analysis-of-origin-destination-data-using-modern-vis-frameworks-part-1-of-2-ee1c6481a595) for generating flow maps with asymmetric bezier curves and spatially-ordered OD matrices in _ggplot2_.
+* [Roger Beecham](http://www.roger-beecham.com) | ([@rjbeecham](https://twitter.com/rJBeecham))
+
+Below are reproducible code examples supporting [this blog post](https://medium.com/@roger.beecham.231/upgrading-spatial-analysis-of-origin-destination-data-using-modern-vis-frameworks-part-1-of-2-ee1c6481a595) for generating flow maps with asymmetric Bezier curves and spatially-ordered OD matrices in _ggplot2_.
 
 
 ## Configure R
 
-In addition to [tidyverse](https://cran.r-project.org/web/packages/tidyverse/index.html) and [simple features](https://cran.r-project.org/web/packages/sf/index.html), these examples depend on the ggplot2 extension `ggforce` and the  deveopment version of ggplot2, downlaoded via `devtools::install_github("tidyverse/ggplot2")`.
+In addition to [tidyverse](https://cran.r-project.org/web/packages/tidyverse/index.html) and [simple features](https://cran.r-project.org/web/packages/sf/index.html), these examples depend on the ggplot2 extension `ggforce` and the  development version of ggplot2, downloaded via `devtools::install_github("tidyverse/ggplot2")`.
 
 ```{r libraries, eval=FALSE}
 # Bundle of packages supporting Tidy data analysis.
@@ -106,8 +108,6 @@ rm(codes, region_lookup)
 
 ## Draw asymmetric Beziers between OD pairs
 
-![Source: 2011 Census flow data](./figures/od_bezier.png)
-
 In order to generate the Bezier curves, we need to calculate centroids for each London borough. We then build a data frame of coordinates representing origins, destinations and control points of our Beziers. These are specified following the method published in [Wood et al. 2011](http://openaccess.city.ac.uk/538/).  For brevity, I have encapsulated these functions into a script.
 
 ```{r lines-data, eval=FALSE}
@@ -133,7 +133,7 @@ od_trajectories <- bind_rows(data %>% filter(o_code!=d_code) %>% pull(od_pair) %
 
 ```
 
-The ggplot2 specification is reasonably straight-forward, but note that it depends on `geom_sf()`, available only in the development version of ggplot2. We create a variable representing OD-pair frequency `f_od`, which is used to determine the visual saliency of flow lines (again this appears in [Wood et al. 2011](http://openaccess.city.ac.uk/538/)).  We can  semi-automate this parameterisation of exponent (`^`) using `dplyr` mutate before the ggplot2 specification call; the smaller the exponent, the less strong the frequency weighting effect.
+The ggplot2 specification is reasonably straight-forward, but note that it depends on `geom_sf()`, available only in the development version of ggplot2. We create a variable representing OD-pair frequency `f_od`, which is used to determine the visual saliency of flow lines (again this appears in [Wood et al. 2011](http://openaccess.city.ac.uk/538/)).  We can  semi-automate this parametrisation of exponent (`^`) using `dplyr` mutate before the ggplot2 specification call; the smaller the exponent, the less strong the frequency weighting effect.
 
 ```{r lines-vis, eval=FALSE}
 # ggplot2 specification for OD flow map from trajectories
@@ -150,10 +150,9 @@ ggplot()+
 
 ```
 
+![Source: 2011 Census flow data](./figures/od_bezier.png)
 
 ## Spatially ordered OD matrix
-
-![Source: 2011 Census flow data](./figures/od_matrix.png)
 
 We first update our OD data with the london_squared borough positions.
 
@@ -195,10 +194,10 @@ data %>%
   )
 ```
 
+![Source: 2011 Census flow data](./figures/od_matrix.png)
 
 # Spatially-ordered choropleths
 
-![Source: 2011 Census flow data](./figures/od_choropleths.png)
 
 We need to attach geometries to our dataset of od pairs.
 
@@ -236,3 +235,5 @@ ggplot()+
     axis.title=element_blank(),
     strip.text=element_blank())
 ```
+
+![Source: 2011 Census flow data](./figures/od_choropleths.png)
