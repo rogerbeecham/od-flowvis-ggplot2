@@ -1,7 +1,7 @@
 'Upgrading' spatial analysis of Origin-Destination data using modern visualization frameworks
 ---------------------------------------------------------------------------------------------
 
--   [Roger Beecham](http://www.roger-beecham.com) | (\[@rjbeecham\](<https://twitter.com/rJBeecham>))
+-   [Roger Beecham](http://www.roger-beecham.com) | \[@rjbeecham\](<https://twitter.com/rJBeecham>)
 
 Below are reproducible code examples supporting [this blog post](https://medium.com/@roger.beecham.231/upgrading-spatial-analysis-of-origin-destination-data-using-modern-vis-frameworks-part-1-of-2-ee1c6481a595) for generating flow maps with asymmetric Bezier curves and spatially-ordered OD matrices in *ggplot2*.
 
