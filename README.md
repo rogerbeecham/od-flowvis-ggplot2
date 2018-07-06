@@ -1,5 +1,5 @@
-'Upgrading' spatial analysis of Origin-Destination data using modern visualization frameworks
----------------------------------------------------------------------------------------------
+Upgrading spatial analysis of Origin-Destination data using modern visualization frameworks
+-------------------------------------------------------------------------------------------
 
 -   [Roger Beecham](http://www.roger-beecham.com) | \[@rjbeecham\](<https://twitter.com/rJBeecham>)
 
@@ -8,7 +8,7 @@ Below are reproducible code examples supporting [this blog post](https://medium.
 Configure R
 -----------
 
-In addition to [tidyverse](https://cran.r-project.org/web/packages/tidyverse/index.html) and [simple features](https://cran.r-project.org/web/packages/sf/index.html), these examples depend on the ggplot2 extension [*ggforce*](https://cran.r-project.org/web/packages/ggforce/index.html) and the development version of *ggplot2*, downloaded via `devtools::install_github("tidyverse/ggplot2")`.
+In addition to [tidyverse](https://cran.r-project.org/web/packages/tidyverse/index.html) and [simple features](https://cran.r-project.org/web/packages/sf/index.html), these examples depend on the *ggplot2* extension [*ggforce*](https://cran.r-project.org/web/packages/ggforce/index.html) and the development version of *ggplot2*, downloaded via `devtools::install_github("tidyverse/ggplot2")`.
 
 ``` r
 # Bundle of packages supporting Tidy data analysis.
@@ -23,7 +23,7 @@ library(ggforce)
 #devtools::install_github("tidyverse/ggplot2")
 library(ggplot2)
 # Set default  ggplot2 theme.
-theme_set(theme_minimal(base_family="Avenir Book"))
+theme_set(theme_minimal())
 ```
 
 Collect Data
@@ -124,7 +124,7 @@ od_trajectories <- bind_rows(data %>% filter(o_code!=d_code) %>% pull(od_pair) %
                                )
 ```
 
-The *ggplot2* specification is reasonably straight-forward, but note that it depends on `geom_sf()`, available only in the development version of *ggplot2*. We create a variable representing OD-pair frequency `f_od`, which is used to determine the visual saliency of flow lines (again this appears in [Wood et al. 2011](http://openaccess.city.ac.uk/538/)). We can semi-automate this parameterisation of exponent that we use to vary this weighting using `dplyr` mutate before the ggplot2 specification call; the smaller the exponent, the less strong the frequency weighting effect (currently set to `^0.4`).
+The *ggplot2* specification is reasonably straight-forward, but note that it depends on `geom_sf()`, available only in the development version of *ggplot2*. We create a variable representing OD-pair frequency `f_od`, which is used to determine the visual saliency of flow lines (again this appears in [Wood et al. 2011](http://openaccess.city.ac.uk/538/)). We can semi-automate this parameterisation of exponent that we use to vary this weighting using `dplyr` mutate before the *ggplot2* specification call; the smaller the exponent, the less strong the frequency weighting effect (currently set to `^0.4`).
 
 ``` r
 # ggplot2 specification for OD flow map from trajectories.
@@ -170,7 +170,7 @@ data %>%
   ggplot(aes(x=o_fX, y=-o_fY)) +
   geom_tile(aes(fill=count))+
   geom_tile(data=data  %>% filter(bor_focus==1), fill="transparent", colour="#252525", size=0.4)+
-  geom_text(aes(4.5, -4, label=bor_label, hjust="middle", vjust="middle"), colour="#252525", alpha=0.5, family="Avenir Book")+
+  geom_text(aes(4.5, -4, label=bor_label, hjust="middle", vjust="middle"), colour="#252525", alpha=0.5)+
   scale_fill_distiller(palette="Blues", direction=1, guide=guide_legend())+
   scale_colour_manual(values=focus_colours)+
   facet_grid(d_fY~d_fX, shrink=FALSE, scales = "free_x")+
@@ -218,7 +218,7 @@ plot_data <- london_boundaries %>%
 ggplot()+
   geom_sf(data=plot_data, aes(fill=count), colour="#636363", size=0.01)+
   geom_sf(data=plot_data  %>% filter(bor_focus==1), fill="transparent",  colour="#636363", size=0.4)+
-  geom_text(data=plot_data, aes(x=lon_east, y=lon_north, label=bor_label), colour="#252525", alpha=0.5, show.legend=FALSE, family="Avenir Book")+
+  geom_text(data=plot_data, aes(x=lon_east, y=lon_north, label=bor_label), colour="#252525", alpha=0.5, show.legend=FALSE)+
   coord_sf(crs=st_crs(plot_data), datum=NA)+
   scale_fill_distiller(palette="Blues", direction=1, guide=guide_legend())+
   facet_grid(d_fY~d_fX, shrink=FALSE)+
