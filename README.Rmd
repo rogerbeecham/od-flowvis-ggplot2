@@ -169,7 +169,7 @@ data <- data %>%
   rename("d_fX"="fX", "d_fY"="fY", "d_bor"="BOR")
 ```
 
-We make use of `geom_tile()` for the matrix of origins, and `geom_facet()` for the matrix of larger destination cells. 
+We make use of `geom_tile()` for the matrix of origins, and `geom_facet()` for the matrix of larger destination cells.
 
 ```{r matrix-vis, eval=FALSE}
 # Identify borough in focus (edit this to switch between D-OD and O-DO matrix).
@@ -181,7 +181,6 @@ data %>%
   geom_tile(data=data  %>% filter(bor_focus==1), fill="transparent", colour="#252525", size=0.4)+
   geom_text(aes(4.5, -4, label=bor_label, hjust="middle", vjust="middle"), colour="#252525", alpha=0.5)+
   scale_fill_distiller(palette="Blues", direction=1, guide=guide_legend())+
-  scale_colour_manual(values=focus_colours)+
   facet_grid(d_fY~d_fX, shrink=FALSE, scales = "free_x")+
   theme( 
     legend.position="bottom",
